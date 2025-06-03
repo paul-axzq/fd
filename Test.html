@@ -1,0 +1,818 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Flaschendrehen</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/lucide/0.263.1/umd/lucide.js"></script>
+  <style>
+    /* ===== GLOBAL RESET & BASE STYLES ===== */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      min-height: 100vh;
+      background: linear-gradient(135deg, #ffecd2, #fcb69f);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+      font-family: Arial, sans-serif, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    }
+
+    /* ===== CONTAINER & LAYOUT ===== */
+    .container {
+      background: white;
+      border-radius: 1.5rem;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+      padding: 2rem;
+      width: 100%;
+      max-width: 600px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    /* ===== TYPOGRAPHY ===== */
+    h1 {
+      font-size: 1.875rem;
+      font-weight: bold;
+      color: #1f2937;
+      margin-bottom: 0.5rem;
+      text-align: center;
+    }
+
+    .subtitle {
+      color: #6b7280;
+      margin-bottom: 2rem;
+      text-align: center;
+    }
+
+    /* ===== INPUT ELEMENTS ===== */
+    .input-group {
+      display: flex;
+      gap: 0.5rem;
+      width: 100%;
+      margin-bottom: 1rem;
+    }
+
+    input#playerName, 
+    input#playerInput {
+      flex: 1;
+      padding: 0.5rem 1rem;
+      font-size: 1rem;
+      border-radius: 0.5rem;
+      border: 2px solid #e5e7eb;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    input#playerName:focus, 
+    input#playerInput:focus {
+      border-color: #9333ea;
+    }
+
+    /* ===== BUTTONS ===== */
+    button {
+      padding: 0.5rem 1rem;
+      font-size: 1rem;
+      border-radius: 0.5rem;
+      border: none;
+      cursor: pointer;
+      transition: background-color 0.2s, opacity 0.2s;
+    }
+
+    button:hover:not(:disabled) {
+      opacity: 0.9;
+    }
+
+    button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    #addPlayerBtn {
+      background: #9333ea;
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0;
+      border: none;
+      background: none;
+    }
+
+    #addPlayerBtn:hover:not(:disabled) {
+      background: #7c3aed;
+    }
+
+    #startBtn, 
+    #startGameBtn {
+      background: linear-gradient(to right, #9333ea, #ec4899);
+      color: white;
+      font-weight: bold;
+      border-radius: 0.75rem;
+      width: 100%;
+      padding: 1rem;
+      font-size: 1.125rem;
+      margin-top: 1rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      transition: background 0.2s, transform 0.2s;
+    }
+
+    #startBtn:hover:not(:disabled),
+    #startGameBtn:hover:not(:disabled) {
+      background: linear-gradient(to right, #7c3aed, #db2777);
+      transform: scale(1.05);
+    }
+
+    .remove-btn, 
+    .remove-btn-style {
+      background: none;
+      border: none;
+      color: #ef4444;
+      cursor: pointer;
+      font-weight: bold;
+      font-size: 1rem;
+      padding: 0;
+      margin-left: 0.5rem;
+      transition: color 0.2s;
+    }
+
+    .remove-btn:hover, 
+    .remove-btn-style:hover {
+      color: #dc2626;
+    }
+
+    /* ===== PLAYER LIST & WARNINGS ===== */
+    #playerList, 
+    #playersList {
+      width: 100%;
+      max-height: 10rem;
+      overflow-y: auto;
+      margin-bottom: 1rem;
+    }
+
+    .player-item, 
+    #playerList li {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #f3f4f6;
+      padding: 0.5rem 1rem;
+      border-radius: 0.5rem;
+      margin-bottom: 0.3rem;
+    }
+
+    .player-name {
+      font-weight: 500;
+      color: #1f2937;
+    }
+
+    .empty-state {
+      text-align: center;
+      color: #9ca3af;
+      font-style: italic;
+      padding: 1rem;
+    }
+
+    #maxPlayersWarning {
+      font-size: 0.875rem;
+      color: #d97706;
+      text-align: center;
+      margin-top: 0.5rem;
+      display: none;
+    }
+
+    #minPlayersInfo {
+      font-size: 0.875rem;
+      color: #6b7280;
+      text-align: center;
+      margin-top: 0.5rem;
+    }
+
+    /* ===== GAME ELEMENTS ===== */
+    #wheelCanvas {
+      margin-top: 1rem;
+      border-radius: 50%;
+      display: block;
+      margin-left: auto;
+      margin-right: auto;
+      margin-top: 60px;
+      border: 3px solid black;
+      border-radius: 50%;
+    }
+
+    #bottleContainer {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      z-index: 2;
+      width: 80px;
+      height: 80px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    #bottle {
+      width: 150px;
+      height: auto;
+      transition: transform 3s ease-out;
+      transform-origin: center center;
+      cursor: pointer;
+    }
+
+    /* ===== MODAL ===== */
+    .modal {
+      position: fixed;
+      top: 0; 
+      left: 0;
+      width: 100%; 
+      height: 100%;
+      background: rgba(0,0,0,0.7);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+    }
+
+    .modal.active {
+      display: flex;
+    }
+
+    .modal-content {
+      background: white;
+      padding: 2rem;
+      border-radius: 1rem;
+      text-align: center;
+      position: relative;
+      z-index: 10000;
+      min-width: 300px;
+    }
+  </style>
+</head>
+
+<body>
+  <!-- ===== HOME SCREEN ===== -->
+  <div id="homeScreen" class="container">
+    <h1>Flaschendrehen</h1>
+    <p class="subtitle">Füge Spieler hinzu und starte das Spiel!</p>
+
+    <div class="input-group">
+      <input
+        type="text"
+        id="playerName"
+        placeholder="Spielername"
+        maxlength="15"
+        autocomplete="off"
+      />
+      <button id="addPlayerBtn" title="Spieler hinzufügen">
+        <img src="https://github.com/paul-axzq/fd/blob/main/play.png?raw=true" 
+             alt="Spieler hinzufügen" 
+             style="height:32px; width:32px;" />
+      </button>
+    </div>
+
+    <div id="maxPlayersWarning">Maximum 8 Spieler erreicht</div>
+
+    <ul id="playerList">
+      <li class="empty-state">Noch keine Spieler hinzugefügt</li>
+    </ul>
+
+    <button id="startBtn" disabled>
+      <i data-lucide="play" style="width: 1.5rem; height: 1.5rem;"></i>
+      <span id="startBtnText">Spiel starten (0 Spieler)</span>
+    </button>
+    <p id="minPlayersInfo">Mindestens 2 Spieler erforderlich</p>
+  </div>
+
+  <!-- ===== GAME SCREEN ===== -->
+  <div id="gameScreen" class="container" style="display:none; position: relative;">
+    <canvas id="wheelCanvas" width="400" height="400"></canvas>
+
+    <div id="bottleContainer">
+      <img
+        src="https://github.com/paul-axzq/fd/blob/main/bottle.png?raw=true"
+        id="bottle"
+        alt="Flasche"
+        onclick="spinBottle()"
+      />
+    </div>
+
+    <p id="questionContainer" style="margin-top: 1rem; font-style: italic;"></p>
+
+    <button onclick="goBack()" style="margin-top: 20px;">Zurück</button>
+  </div>
+
+  <!-- ===== MODAL ===== -->
+  <div id="modal" class="modal">
+    <div class="modal-content">
+      <p id="selectedPlayerText" style="font-weight: bold; margin-bottom: 1rem;"></p>
+      <p>Wähle: Wahrheit oder Pflicht</p>
+      <button id="truthBtn" style="margin-right: 1rem; padding: 0.5rem 1rem;">Wahrheit</button>
+      <button id="dareBtn" style="padding: 0.5rem 1rem;">Pflicht</button>
+      <br><br>
+      <button id="closeModalBtn" style="margin-top: 1rem; padding: 0.25rem 0.75rem;">Schließen</button>
+    </div>
+  </div>
+
+  <script>
+    /* ===== GLOBAL VARIABLES ===== */
+    let players = [];
+    let specialMode = false;
+
+    /* ===== DOM ELEMENTS ===== */
+    const playerNameInput = document.getElementById('playerName');
+    const addPlayerBtn = document.getElementById('addPlayerBtn');
+    const playerList = document.getElementById('playerList');
+    const startBtn = document.getElementById('startBtn');
+    const startBtnText = document.getElementById('startBtnText');
+    const minPlayersInfo = document.getElementById('minPlayersInfo');
+    const maxPlayersWarning = document.getElementById('maxPlayersWarning');
+    const modal = document.getElementById('modal');
+    const selectedPlayerText = document.getElementById('selectedPlayerText');
+    const truthBtn = document.getElementById('truthBtn');
+    const dareBtn = document.getElementById('dareBtn');
+    const closeModalBtn = document.getElementById('closeModalBtn');
+    const questionContainer = document.getElementById('questionContainer');
+
+    /* ===== QUESTION & TASK ARRAYS ===== */
+    const normalTruthQuestions = [
+        "Wie viele Jungs / Mädchen hast du bisher geküsst?",
+        "Bist du im Moment verliebt?",
+        "Hast du schon mal mit einer Frau / einem Mann rumgemacht?",
+        "Was war dein letzter Traum an den du dich erinnerst?",
+        "Hast du schon mal etwas geklaut? Wenn ja, was?",
+        "Was war dein schönstes Date?",
+        "Wen in der Runde findest du am interessantesten?",
+        "Mit wem in der Runde würdest du am liebsten einen Urlaub verbringen?",
+        "Hast du schon mal eine Straftat begangen?",
+        "Mit wem hattest du deinen ersten Kuss?",
+        "Was würdest du machen, wenn du für einen Tag ein Mann oder eine Frau wärst?",
+        "Welches Tier wärst du am liebsten?",
+        "Hast du schon mal illegale Drogen genommen?",
+        "Wen in der Runde findest du am attraktivsten?",
+        "Wonach hast du als letztes gegoogelt?",
+        "Wer in der Runde ist am besten angezogen und warum?",
+        "Welches ist dein aktuelles Lieblingslied?",
+        "Von wem hast du deinen letzten Korb bekommen?",
+        "Hast du schon mal auf dem Klo telefoniert?",
+        "Was war das gemeinste, was du je getan hast?",
+        "Was war das kriminellste, was du je getan hast?",
+        "Hast du schon mal sexy Bilder von dir verschickt?",
+        "Würdest du mit jemandem knutschen, den du gerade erst kennengelernt hast?",
+        "Was findest du an dir am sexiesten?",
+        "Wofür hast du dich in letzter Zeit geschämt?",
+        "Worauf guckst du zuerst, wenn du jemanden kennenlernst?",
+        "Wie kann man dich am schnellsten von sich begeistern?",
+        "Wer in der Runde hat die schönsten Lippen?",
+        "Wer in der Runde hat den schönsten Hintern?",
+        "Wie sieht dein Traumdate aus?",
+        "Mit wem in der Runde würdest du gerne für einen Tag das Leben tauschen?",
+        "Welche Körperstellen rasierst du regelmäßig?",
+        "Was war deine letzte Lüge?",
+        "Welches Abenteuer würdest du gerne noch erleben?",
+        "Hast du schon mal jemanden betrogen?",
+        "Was würdest du an deinem Körper verändern, wenn du könntest?",
+        "Was würdest du machen, wenn du nur noch eine Stunde zu leben hättest?",
+        "Was turnt dich bei Frauen/Männern besonders an?",
+        "Was war der größte Fehler deines Lebens?",
+        "Wie viele Menschen hast du schon geküsst?",
+        "Welcher ist dein Lieblings-Song?",
+        "Wann hattest du das letzte Mal einen Hangover?",
+        "In wen bist du verliebt?",
+        "Was war das Peinlichste, das dir jemals passiert ist?",
+        "Was ist das Verrückteste, das du je getan hast?",
+        "Welche Person in dieser Runde würdest du am liebsten küssen?",
+        "Was ist das Seltsamste, was du jemals gegessen hast?",
+        "Welches war dein schlimmster Liebeskummer?",
+        "Was ist das Merkwürdigste, das du je über jemanden gedacht hast?",
+        "Welches ist dein größtes unerfülltes Ziel oder deine größte unerfüllte Fantasie?",
+        "Hast du schon einmal absichtlich jemanden verletzt?",
+        "Was ist das Peinlichste, was deine Eltern je vor dir getan haben?",
+        "Was ist das Romantischste, was du jemals für jemanden getan hast?",
+        "Hast du schon einmal eine Beziehung geheim gehalten?",
+        "Was war der verrückteste Ort, an dem du jemals geküsst hast?",
+        "Würdest du eher die Wahrheit sagen oder eine Pflicht erfüllen, die dich in Verlegenheit bringen würde?",
+        "Was ist das Längste, was du jemals ohne Duschen ausgehalten hast?",
+        "Hast du schon einmal in der Öffentlichkeit gefurzt und es jemand anderem in die Schuhe geschoben?",
+        "Wann hattest du das letzte Mal einen Wutanfall und warum?",
+        "Welche Person in dieser Runde würdest du am ehesten daten?",
+        "Was ist das Seltsamste, was du jemals im Internet recherchiert hast?",
+        "Hast du schon einmal über eine Person gelästert, die gerade im Raum war?",
+        "Was war der aufregendste Moment deines Lebens?",
+        "Hast du schon einmal jemanden online gestalkt?",
+        "Was war das Lustigste, das du jemals erlebt hast?",
+        "Würdest du lieber dein peinlichstes Foto im Internet teilen oder dein dunkelstes Geheimnis preisgeben?",
+        "Was ist das Schlimmste, was du je jemandem angetan hast?",
+        "Wovon träumst du, wenn du nachts schlafen gehst?",
+        "Hast du schon einmal etwas getan, wofür du dich sehr geschämt hast?",
+        "Was war das Verrückteste, das du jemals für Geld getan hast?",
+        "Welche Eigenschaft an dir wünschst du dir, dass sie stärker ausgeprägt ist?",
+        "Was war der ungewöhnlichste Ort, an dem du jemals gepinkelt hast?",
+        "Hast du schon einmal etwas gestohlen, das du jetzt bereust?",
+        "Was war das Letzte, wofür du geweint hast?",
+        "Hast du schon einmal absichtlich jemanden belogen, den du liebst?",
+        "Was war das Dümmste, was du jemals getan hast?",
+        "Würdest du eher die Wahrheit sagen oder eine peinliche Aufgabe erfüllen?",
+        "Hast du schon einmal überlegt, ob du eine andere sexuelle Orientierung hast?",
+        "Was ist das Schlimmste, was dir jemals passiert ist?",
+        "Hast du schon einmal etwas im Geschäft probiert und nicht bezahlt?",
+        "Was ist das Gemeinste, was dir jemals jemand angetan hat?",
+        "Welche Eigenschaft an dir wünschst du dir, dass sie schwächer ausgeprägt ist?",
+        "Hast du schon einmal etwas Peinliches über dich selbst im Internet veröffentlicht?",
+        "Was war der größte Streit, den du jemals mit jemandem hattest?",
+        "Würdest du lieber die Wahrheit sagen oder eine Pflicht erfüllen, bei der du dich übergeben musst?",
+        "Hast du schon einmal überlegt, mit jemandem Schluss zu machen, den du liebst?",
+        "Was ist das Peinlichste, was du je in der Schule passiert ist?",
+        "Hast du schon einmal einen Liebesbrief geschrieben und nicht abgeschickt?",
+        "Was war das Verrückteste, was du je im Namen der Liebe getan hast?",
+        "Welche Person in dieser Runde würdest du am ehesten heiraten?",
+        "Hast du schon einmal etwas Illegales getan, wofür du nicht erwischt wurdest?",
+        "Wann hattest du das letzte Mal Sex?",
+        "Mit wem hattest du das letzte Mal Sex?",
+        "Wenn du mit einer Person in der Runde schlafen müsstest, wen würdest du auswählen?",
+        "Wen in der Runde würdest du am ehesten küssen und warum?",
+        "Hattest du schon mal einen Dreier?",
+        "Hast du schon mal von einem Dreier geträumt?",
+        "Wann hattest du deinen letzten feuchten Traum?",
+        "Was war der verrückteste Ort, an dem du jemals Sex hattest?",
+        "Wie oft hast du Sex?",
+        "Wann hast du das letzte Mal masturbiert?",
+        "Wie schafft man es am besten, dich zu erregen?",
+        "Hast du schon mal mit jemandem aus der Runde geschlafen oder geknutscht?",
+        "Welches Körperteil turnt dich am meisten an?",
+        "Wen aus der Runde würdest du am liebsten nackt sehen wollen?",
+        "Welche ist deine Lieblingsstellung?",
+        "Hattest du schon mal einen One-Night-Stand?",
+        "Mit wie vielen Personen hattest du schon Sex?",
+        "Wieso bist du gut im Bett?",
+        "Wie kriegt man dich am besten rum?",
+        "Mit wem hattest du bisher das beste Sex-Erlebnis deines Lebens?",
+        "Hast du schon mal Nacktbilder verschickt?",
+        "Gefällt dir Analsex?",
+        "Bist du eher dominant oder devot?",
+        "Welche Kleidung findest du besonders sexy an dir?",
+        "Hast du schon mal jemanden gefesselt oder wurdest du schon mal gefesselt?",
+        "Welches Pornogenre findest du am besten?",
+        "Hast du ein Sexspielzeug?",
+        "Was ist das Verrückteste, was du je getan hast, um jemanden zu beeindrucken?"
+    ];
+
+    const normalDareTasks = [
+        "Imitiere einen brunftigen Hirsch.",
+        "Tausche dein Oberteil mit dem Spieler links oder rechts von dir.",
+        "Leg dich in die Mitte, schließ die Augen und lass dich eine Minute lang von allen kitzeln.",
+        "Trinke einen Shot (nur für Erwachsene).",
+        "Mach 10 Liegestütze oder eine andere Sportübung.",
+        "Mach ein Selfie von der Gruppe und poste es auf Instagram, Facebook oder Snapchat.",
+        "Mach der Person links oder rechts von dir ein ernstgemeintes Kompliment.",
+        "Teste wessen Haare am besten riechen.",
+        "Imitiere eine Person aus der Runde – die anderen müssen raten, wer es ist.",
+        "Trink das Getränk von dem Spieler links oder rechts von dir auf Ex.",
+        "Tanze 60 Sekunden sexy zu einem Lied.",
+        "Beleidige (spaßig) die Person links oder rechts von dir.",
+        "Schick einer Person per WhatsApp ein Kompliment.",
+        "Zeig allen ein peinliches Foto von dir.",
+        "Zeig allen deine letzte WhatsApp-Nachricht.",
+        "Zeig allen das letzte Foto, das du geschossen hast.",
+        "Umarme die Person gegenüber so herzlich wie möglich.",
+        "Flirte eine Runde mit der Person links oder rechts von dir.",
+        "Erzähl der Person gegenüber, was du besonders attraktiv an ihr findest.",
+        "Schrei 20 schlimme Schimpfwörter.",
+        "Nimm einen Eiswürfel und steck ihn dir in die Hose.",
+        "Schick jemandem, der nicht mitspielt, ein Bild von deinen nackten Füßen.",
+        "Schütte dir einen Drink ein, ohne die Hände zu benutzen.",
+        "Ruf die fünftletzte Nummer an und sing ein Lied, bis sie den Titel errät.",
+        "Du bist für eine Runde der Butler – achte darauf, dass alle genug zu trinken haben.",
+        "Du hast dich schlecht benommen – stell dich in die Ecke und schäm dich.",
+        "Lass einen Spieler an deiner Achsel riechen.",
+        "Gib deinem linken Nachbarn dein Handy und lass ihn in deine Galerie schauen.",
+        "Lege einen Moonwalk wie Michael Jackson hin.",
+        "Laufe wie bei Germany's Next Topmodel über den Catwalk.",
+        "Jaule 30 Sekunden wie ein Wolf – ohne zu lachen.",
+        "Spiele eine Szene aus deinem Lieblingsfilm nach.",
+        "Mache einen Bauchtanz für die Gruppe.",
+        "Gib jemandem in der Runde eine professionelle Massage.",
+        "Tanze eine Minute lang wie ein Roboter.",
+        "Trage deine Unterwäsche über deiner Hose für die nächsten zwei Runden.",
+        "Iss einen Löffel Senf oder scharfer Sauce.",
+        "Imitiere eine bekannte Persönlichkeit – lass die anderen raten.",
+        "Erzähle eine peinliche Geschichte aus deinem Leben.",
+        "Mach einen Handstand gegen die Wand für mindestens 10 Sekunden.",
+        "Führe einen Breakdance-Move vor.",
+        "Sing ein Lied rückwärts.",
+        "Lass dir ein lustiges Gesicht schminken und trage es weiter.",
+        "Trinke einen Smoothie aus zufälligen Zutaten der Gruppe.",
+        "Versuche, dich selbst zu kitzeln, bis du lachst.",
+        "Gib jemandem in der Runde eine Massage mit den Füßen.",
+        "Mach einen Kopfstand für mindestens 30 Sekunden.",
+        "Zeige der Gruppe deinen besten Zaubertrick.",
+        "Tanze auf einem Bein für eine Minute.",
+        "Gib einer Person ein High-Five mit dem Fuß.",
+        "Mach einen Handstand und trinke dabei ein Glas Wasser.",
+        "Lass dich von jemandem in der Runde schminken.",
+        "Versuche, eine Runde auf den Händen zu laufen.",
+        "Versuche, deinen Ellbogen mit deiner Zunge zu berühren.",
+        "Mache eine Yoga-Pose für mindestens 30 Sekunden.",
+        "Versuche, einen Apfel mit deinen Zähnen zu schälen.",
+        "Mach einen Spagatversuch.",
+        "Sing ein Lied mit vollem Mund.",
+        "Trinke ein Glas Wasser ohne Hände.",
+        "Imitiere ein Tiergeräusch – die anderen raten welches.",
+        "Versuche, einen Purzelbaum zu machen.",
+        "Tanze wie ein wildes Huhn für eine Minute.",
+        "Versuche, deinen Daumen in den Mund zu stecken.",
+        "Mache eine Standwaage für mindestens 20 Sekunden.",
+        "Gib jemandem in der Runde eine Knuddelattacke.",
+        "Stell dich vor einen Spiegel und erfinde eine Tanzroutine.",
+        "Versuche, deinen Fuß hinter deinen Kopf zu legen.",
+        "Mach einen Handstand und summe dabei ein Lied.",
+        "Spiele eine Szene aus einem bekannten Theaterstück.",
+        "Imitiere einen T-Rex und bring die anderen zum Lachen.",
+        "Führe einen verrückten Tanz vor, den du spontan erfindest.",
+        "Mache eine Katzenpose und miaue laut.",
+        "Gib jemandem in der Runde eine Bauchmassage.",
+        "Versuche, deine Zunge zu einer Rolle zu formen.",
+        "Tanze wie ein Disco-König oder eine Königin.",
+        "Stell dich auf die Zehenspitzen und bleib so lange wie möglich.",
+        "Imitiere einen Sumo-Ringer und bring die anderen zum Lachen.",
+        "Tanze 30 Sekunden zu deinem Lieblingslied – egal wo du bist.",
+        "Schicke deinem Schwarm eine Nachricht mit nur einem Emoji.",
+        "Flirte eine Minute mit der Person rechts von dir.",
+        "Rufe jemanden an und sing ihm ein Lied.",
+        "Erzähle einen Witz, der alle zum Lachen bringt.",
+        "Versuche, die Person links von dir zum Lachen zu bringen – ohne Worte.",
+        "Schreibe deinem Crush eine süße Nachricht.",
+        "Mache 20 Sekunden lang das albernste Gesicht, das du kannst.",
+        "Erzähle von deinem ersten Kuss.",
+        "Imitiere jemanden im Raum für 1 Minute.",
+        "Steh auf und tanze, als ob niemand zusieht.",
+        "Zeige dein bestes Flirtgesicht.",
+        "Rufe einen Freund an und sag ihm, dass du ihn liebst.",
+        "Ziehe dein Shirt verkehrt herum an.",
+        "Mache eine Grimasse und halte sie 15 Sekunden.",
+        "Sage der Person gegenüber ein ehrlich gemeintes Kompliment.",
+        "Erzähle eine peinliche Geschichte über dich.",
+        "Mach eine 1-minütige Gesangseinlage.",
+        "Mache jemandem ein Küsschen auf die Wange.",
+        "Laufe wie ein Model durch den Raum.",
+        "Zeige den lustigsten Tanz, den du kennst.",
+        "Mache 15 Hampelmänner.",
+        "Erfinde einen Flirtspruch für die Person rechts von dir.",
+        "Versuche, eine Minute lang nur mit Gestik zu kommunizieren.",
+        "Imitiere dein Sternzeichen als Tier.",
+        "Zeichne ein Herz auf die Wange der Person links von dir.",
+        "Schreibe eine Liebeserklärung und zeige sie herum.",
+        "Singe das Alphabet rückwärts.",
+        "Schreibe deinen Namen mit dem Fuß in die Luft.",
+        "Erzähle, was du an deinem besten Freund am meisten magst.",
+        "Mach eine lustige Nachahmung deines Lieblingsstars.",
+        "Erfinde einen Spitznamen für jeden im Raum.",
+        "Sage laut drei Dinge, die du an dir selbst magst.",
+        "Flüstere der Person gegenüber ein Geheimnis ins Ohr.",
+        "Imitiere eine bekannte TV-Serie oder Cartoon-Figur.",
+        "Erzähle von deinem peinlichsten Mode-Fail.",
+        "Spiele einen Werbespot für ein erfundenes Produkt.",
+        "Überzeuge jemanden, dir ein Getränk zu bringen.",
+        "Tu so, als wärst du verliebt in den Spieler links von dir.",
+        "Mache 10 Kniebeugen.",
+        "Erzähle von deinem verrücktesten Traum.",
+        "Erfinde spontan eine kurze Liebesgeschichte.",
+        "Tu so, als wärst du auf einem Date und küsse in die Luft.",
+        "Erfinde einen Flirt-Dialog mit der Person gegenüber.",
+        "Mach eine kurze Yoga-Übung und lade alle zum Mitmachen ein.",
+        "Imitiere einen brunftigen Hirsch."
+    ];
+
+    const specialTruthQuestions = [
+      "Hattest du schon deri erstes Mal?",
+      "Nele Spezial: Welches Geheimnis hast du noch niemandem erzählt?",
+      "Nele Spezial: Was würdest du tun, wenn du einen Tag unsichtbar wärst?"
+    ];
+
+    const specialDareTasks = [
+      "Küsse eine Person neben dir, egal wohin.",
+      "Nele Spezial: Erzähle einen peinlichen Witz.",
+      "Nele Spezial: Tanze 30 Sekunden ohne Musik."
+    ];
+
+    /* ===== UTILITY FUNCTIONS ===== */
+    function getRandomItem(arr) {
+      return arr[Math.floor(Math.random() * arr.length)];
+    }
+
+    function checkSpecialMode() {
+      if (
+        players.length >= 2 &&
+        players[0].toLowerCase() === 'nele' &&
+        players[1].toLowerCase() === 'paul'
+      ) {
+        specialMode = true;
+      } else {
+        specialMode = false;
+      }
+    }
+
+    /* ===== WHEEL DRAWING FUNCTION ===== */
+    function drawWheel() {
+      const canvas = document.getElementById('wheelCanvas');
+      const ctx = canvas.getContext('2d');
+      const angle = (2 * Math.PI) / players.length;
+      const centerX = canvas.width / 2;
+      const centerY = canvas.height / 2;
+      const radius = canvas.width / 2;
+
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      for (let i = 0; i < players.length; i++) {
+        // Generate color
+        const hue = (i * 360) / players.length;
+        ctx.fillStyle = `hsl(${hue}, 70%, 60%)`;
+
+        // Draw segment
+        ctx.beginPath();
+        ctx.moveTo(centerX, centerY);
+        ctx.arc(centerX, centerY, radius, i * angle, (i + 1) * angle);
+        ctx.closePath();
+        ctx.fill();
+
+        // Draw segment border (black line)
+        ctx.strokeStyle = 'black';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(centerX, centerY);
+        ctx.arc(centerX, centerY, radius, i * angle, (i + 1) * angle);
+        ctx.closePath();
+        ctx.stroke();
+
+        // Draw text
+        ctx.save();
+        ctx.translate(centerX, centerY);
+        ctx.rotate(i * angle + angle / 2);
+        ctx.textAlign = "right";
+        ctx.fillStyle = "#fff";
+        ctx.font = "16px Arial";
+        ctx.fillText(players[i], radius - 10, 6);
+        ctx.restore();
+      }
+
+      // Load and draw Bitcoin image centered
+      const img = new Image();
+      img.src = 'https://github.com/paul-axzq/fd/blob/main/bitcoin.png?raw=true';
+      img.onload = function() {
+        const innerRadius = radius * 0.3; // Size of inner circle, scale appropriately
+        const imgSize = innerRadius * 2.2; // Adjust image size
+        ctx.drawImage(img, centerX - imgSize / 2, centerY - imgSize / 2, imgSize, imgSize);
+      };
+    }
+
+    /* ===== PLAYER MANAGEMENT FUNCTIONS ===== */
+    function addPlayer() {
+      const name = playerNameInput.value.trim();
+      if (!name) return; // No empty name
+      if (players.includes(name)) {
+        alert('Dieser Spielername wurde bereits hinzugefügt.');
+        return;
+      }
+      if (players.length >= 8) {
+        maxPlayersWarning.style.display = 'block';
+        return;
+      }
+      players.push(name);
+      playerNameInput.value = '';
+      maxPlayersWarning.style.display = 'none';
+      updateUI();
+      checkSpecialMode(); // Check special mode on change
+    }
+
+    function removePlayer(index) {
+      players.splice(index, 1);
+      maxPlayersWarning.style.display = 'none';
+      updateUI();
+      checkSpecialMode(); // Check special mode on change
+    }
+
+    /* ===== UI UPDATE FUNCTION ===== */
+    function updateUI() {
+      // Update player list
+      if (players.length === 0) {
+        playerList.innerHTML = '<li class="empty-state">Noch keine Spieler hinzugefügt</li>';
+      } else {
+        playerList.innerHTML = players.map((player, index) =>
+          `<li class="player-item">
+            <span class="player-name">${player}</span>
+            <button class="remove-btn" onclick="removePlayer(${index})" aria-label="Spieler entfernen">✕</button>
+          </li>`).join('');
+      }
+
+      // Update start button
+      startBtn.disabled = players.length < 2;
+      startBtnText.textContent = `Spiel starten (${players.length} Spieler)`;
+
+      // Minimum players info
+      minPlayersInfo.style.display = players.length < 2 ? 'block' : 'none';
+
+      // Max players warning
+      maxPlayersWarning.style.display = players.length >= 8 ? 'block' : 'none';
+    }
+
+    /* ===== BOTTLE SPIN FUNCTION ===== */
+    function spinBottle() {
+      if (players.length === 0) {
+        alert('Bitte füge zuerst Spieler hinzu.');
+        return;
+      }
+
+      const bottle = document.getElementById('bottle');
+      const spins = Math.floor(Math.random() * 7) + 3;
+      const extraDegrees = Math.floor(Math.random() * 360);
+      const totalDegrees = spins * 360 + extraDegrees;
+
+      bottle.style.transition = 'transform 3s ease-out';
+      bottle.style.transform = `rotate(${totalDegrees}deg)`;
+
+      setTimeout(() => {
+        const randomIndex = Math.floor(Math.random() * players.length);
+        const chosenPlayer = players[randomIndex];
+        selectedPlayerText.textContent = `Ausgewählter Spieler: ${chosenPlayer}`;
+        modal.classList.add('active');
+        questionContainer.textContent = '';
+        truthBtn.disabled = false;
+        dareBtn.disabled = false;
+
+        bottle.style.transition = 'none';
+        bottle.style.transform = `rotate(${totalDegrees % 360}deg)`;
+
+        truthBtn.onclick = () => {
+          let question;
+          if (specialMode && chosenPlayer.toLowerCase() === 'nele') {
+            question = getRandomItem(specialTruthQuestions);
+          } else {
+            question = getRandomItem(normalTruthQuestions);
+          }
+          questionContainer.textContent = `Wahrheit: ${question}`;
+          truthBtn.disabled = true;
+          dareBtn.disabled = true;
+        };
+
+        dareBtn.onclick = () => {
+          let task;
+          if (specialMode && chosenPlayer.toLowerCase() === 'nele') {
+            task = getRandomItem(specialDareTasks);
+          } else {
+            task = getRandomItem(normalDareTasks);
+          }
+          questionContainer.textContent = `Pflicht: ${task}`;
+          truthBtn.disabled = true;
+          dareBtn.disabled = true;
+        };
+      }, 3000);
+    }
+
+    /* ===== NAVIGATION FUNCTIONS ===== */
+    function goBack() {
+      // Hide game screen
+      document.getElementById('gameScreen').style.display = 'none';
+      // Show start screen
+      document.getElementById('homeScreen').style.display = 'flex';
+      
+      // Close modal if open
+      modal.classList.remove('active');
+    }
+
+    /* ===== EVENT LISTENERS ===== */
+    addPlayerBtn.addEventListener('click', addPlayer);
+    
+    playerNameInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') addPlayer();
+    });
+
+    startBtn.addEventListener('click', () => {
+      // Hide start screen
+      document.getElementById('homeScreen').style.display = 'none';
+      // Show game screen
+      document.getElementById('gameScreen').style.display = 'flex';
+
+      drawWheel();
+      console.log('Spiel startet mit Spielern:', players);
+    });
+
+    closeModalBtn.onclick = () => {
+      modal.classList.remove('active');
+      questionContainer.textContent = '';
+    };
+
+    /* ===== INITIALIZATION ===== */
+    updateUI();
+  </script>
+</body>
+</html>
